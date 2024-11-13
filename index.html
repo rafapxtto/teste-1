@@ -11,8 +11,13 @@
     <label for="product-select">Selecione o produto:</label>
     <select id="product-select">
         <option value="">Selecione</option> <!-- Opção padrão -->
-        <!-- As opções serão carregadas via JavaScript -->
     </select>
+
+    <!-- Mensagem com o link do Google Drive -->
+    <p id="drive-link">
+        Para acessar imagens dos produtos, acesse o drive da Minuano: 
+        <a href="https://minuanodecor.com.br/arquivos" target="_blank">minuanodecor.com.br/arquivos</a>
+    </p>
 
     <div id="product-list">
         <!-- As informações do produto serão exibidas aqui -->
@@ -21,9 +26,10 @@
     <script>
         const productSelect = document.getElementById('product-select');
         const productList = document.getElementById('product-list');
+        const driveLink = document.getElementById('drive-link'); // Elemento do link do Drive
 
         const spreadsheetId = '1Xo2qBdMPK13WQ_6ZH5mV7-FG1wQwJ2JaXoReTRMmuuM'; // ID da sua planilha
-        const apiKey = 'AIzaSyD_utB9ALtwQC8nCRblDlkOPLYxOYylLHs'; // Sua chave da API
+        const apiKey = 'AIzaSyD_utB9ALtwQC8nCRblDlkOPLYxOYylLHs'; // Sua nova chave da API
 
         const sheetRange = 'Sheet1!A:D'; // A e D são as colunas da planilha: Nome, Descrição, Especificações, Imagem
 
@@ -31,15 +37,22 @@
         async function fetchProducts() {
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetRange}?key=${apiKey}`;
             const response = await fetch(url);
-            const data = await response.json();
 
-            // Se não conseguir buscar os dados, exibe um erro
-            if (data.error) {
-                console.error("Erro ao buscar os dados:", data.error.message);
+            // Verificar se houve erro na requisição
+            if (!response.ok) {
+                console.error('Erro na requisição', response.status, response.statusText);
                 return [];
             }
 
-            // Mapeia os dados para objetos com nome, descrição, especificações e imagem
+            const data = await response.json();
+
+            // Verificar se ocorreu erro no formato dos dados ou na resposta da API
+            if (data.error) {
+                console.error('Erro ao buscar dados da planilha:', data.error.message);
+                return [];
+            }
+
+            // Mapear os dados recebidos da planilha
             const products = data.values.slice(1).map(row => ({
                 name: row[0],
                 description: row[1],
@@ -96,8 +109,9 @@
                 displayProducts(products, event.target.value);
             });
 
-            // Exibe todos os produtos inicialmente
-            displayProducts(products);
+            // Inicialmente não exibe os produtos, apenas a mensagem com o link
+            productList.innerHTML = "";
+            driveLink.style.display = 'block';  // Exibe o link do drive
         }
 
         // Inicializa a página
